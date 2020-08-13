@@ -1,5 +1,5 @@
 var canvas;
-var canvasContext;
+var context;
 
 var ballX = 50;
 var ballY = 50;
@@ -8,7 +8,7 @@ var ballSpeedY = 4;
 
 var playerOneScore = 0;
 var playerTwoScore = 0;
-const WINNING_SCORE = 1;
+const WINNING_SCORE = 5;
 
 var showWinScreen = false;
 
@@ -28,9 +28,17 @@ function calculateMousePos(evt) {
   };
 }
 
+function handelMouseClick(evt) {
+  if (showWinScreen) {
+    playerOneScore = 0;
+    playerTwoScore = 0;
+    showWinScreen = false;
+  }
+}
+
 window.onload = () => {
   canvas = document.getElementById("gameCanvas");
-  canvasContext = canvas.getContext("2d");
+  context = canvas.getContext("2d");
 
   var framesPerSecond = 30;
   drawEverything();
@@ -38,6 +46,8 @@ window.onload = () => {
     moveEverything();
     drawEverything();
   }, 1000 / framesPerSecond);
+
+  canvas.addEventListener("mousedown", handelMouseClick);
 
   canvas.addEventListener("mousemove", function (evt) {
     var mousePos = calculateMousePos(evt);
@@ -48,8 +58,6 @@ window.onload = () => {
 function ballReset() {
   if (playerOneScore >= WINNING_SCORE || playerTwoScore >= WINNING_SCORE) {
     showWinScreen = true;
-    playerOneScore = 0;
-    playerTwoScore = 0;
   }
   ballX = canvas.width / 2;
   ballY = canvas.height / 2;
@@ -100,13 +108,33 @@ function moveEverything() {
   }
 }
 
+function drawNet() {
+  for (let i = 0; i < canvas.height; i += 40)
+    colorRect(canvas.width / 2 - 1, i, 2, 20, "white");
+}
+
 function drawEverything() {
   if (showWinScreen == true) {
-    canvasContext.fillText("CLICK TO CONTINUE", 350, 250);
+    context.font = "18pt Ariel";
+
+    for (let i = 0; i < canvas.height; i += 40)
+      colorRect(canvas.width / 2 - 1, i, 2, 20, "black");
+
+    context.fillStyle = "white";
+
+    if (playerOneScore >= WINNING_SCORE) {
+      context.fillText("P L A Y E R  W O N !!", 270, 250);
+    } else if (playerTwoScore >= WINNING_SCORE) {
+      context.fillText("C O M P U T E R  W O N !!", 255, 250);
+    }
+    context.fillText("C L I C K  T O  C O N T I N U E", 235, 300);
     return;
   }
   //THE BLACK SCREEN
   colorRect(0, 0, canvas.width, canvas.height, "black");
+
+  //THE NET
+  drawNet();
 
   //LEFT PLAYER PADDLE
   colorRect(2, paddleOneY, PADDLE_THICKNESS, PADDLE_HEIGHT, "white");
@@ -124,18 +152,19 @@ function drawEverything() {
   colorCircle(ballX, ballY, 10, "white");
 
   //SCORING
-  canvasContext.fillText(playerOneScore, 50, 50);
-  canvasContext.fillText(playerTwoScore, canvas.width - 150, 50);
+  context.font = "12pt Ariel";
+  context.fillText("PLAYER : " + playerOneScore, 50, 50);
+  context.fillText("COMPUTER : " + playerTwoScore, canvas.width - 150, 50);
 }
 
 function colorRect(leftX, topY, width, height, drawColor) {
-  canvasContext.fillStyle = drawColor;
-  canvasContext.fillRect(leftX, topY, width, height);
+  context.fillStyle = drawColor;
+  context.fillRect(leftX, topY, width, height);
 }
 
 function colorCircle(centerX, centerY, radius, color) {
-  canvasContext.fillStyle = color;
-  canvasContext.beginPath();
-  canvasContext.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
-  canvasContext.fill();
+  context.fillStyle = color;
+  context.beginPath();
+  context.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
+  context.fill();
 }
