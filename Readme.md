@@ -1,9 +1,14 @@
 # Arcade--Tennis-Game
-# The native application for play...
-* The branch consists of 'Tennis.py' which could be executed by the terminal by entering
+# The cross-platform application for play...
+* The branch consists of 'Tennis.py' made using the kivy framework
+# Prequisites
+Install kivy on your machine before running the application by entering the following on your terminal
+```
+pip install kivy
+```
+# Then
+Your file could be run across all native platforms with file just run the following from the terminal
+
 ```
 python Tennis.py
 ```
-# OR
-
-The game could be played by simply double clicking the Tennis.exe made from the Tennis.py file using the 'pyinstaller'.
