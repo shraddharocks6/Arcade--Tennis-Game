@@ -1,9 +1,12 @@
 # Arcade--Tennis-Game
 # The native application for play...
-* The branch consists of 'Tennis.py' which could be executed by the terminal by entering
+The branch consists of tennis game in Java which could be used for building and playing with the Jar application.
+The following command could be used for building the jar.
 ```
-python Tennis.py
+javac -cp lib/* src/com/tennisgame/*.java -d build
+jar cfm TennisGame.jar Manifest.txt -C build .
 ```
-# OR
-
-The game could be played by simply double clicking the Tennis.exe made from the Tennis.py file using the 'pyinstaller'.
+Run the following command to start the game:
+```
+java -jar TennisGame.jar
+```
