@@ -1,42 +1,95 @@
-import gym
 import numpy as np
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
-import tensorflow as tf
 
-# Set TensorFlow GPU memory growth to optimize GPU memory allocation
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-    try:
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-    except RuntimeError as e:
-        print(e)
+class TennisEnvironment:
+    def __init__(self):
+        self.state = None
+        self.num_actions = 3  # Example: 3 possible actions
+        self.paddle_position = 0  # Example: Paddle position
+        self.player_action = None  # Player's action
+        
+        # Define other variables and parameters specific to the Tennis game
+        
+    def reset(self):
+        # Initialize the environment and return the initial state
+        self.state = 0  # Example: Initial state is 0
+        self.paddle_position = 0  # Reset paddle position
+        self.player_action = None  # Reset player's action
+        return self.state
+    
+    def step(self, action):
+        # Take a step in the environment based on the given action and return the next state, reward, and done flag
+        
+        # Example logic:
+        if action == 0:
+            self.paddle_position += 1
+        elif action == 1:
+            self.paddle_position -= 1
+        elif action == 2:
+            self.paddle_position *= 2
+        
+        # Get player's action
+        if self.player_action is not None:
+            player_action = self.player_action
+            self.player_action = None
+        else:
+            player_action = self.get_player_action()  # Get player's action
+        
+        self.update_game_state()  # Update the game state based on paddle position
+        
+        reward = self.calculate_reward()  # Calculate reward based on the current state
+        done = self.check_done()  # Check if the episode is done
+        
+        return self.state, reward, done, {}
+    
+    def update_game_state(self):
+        # Update the game state based on the paddle position and other game mechanics
+        
+        # Example logic:
+        if self.paddle_position > 10:
+            self.state = 1
+        else:
+            self.state = 0
+    
+    def calculate_reward(self):
+        # Calculate the reward based on the current state
+        
+        # Example logic:
+        if self.state == 1:
+            return 1.0  # Positive reward if the state is 1
+        else:
+            return -0.1  # Negative reward for other states
+    
+    def check_done(self):
+        # Check if the episode is done
+        
+        # Example logic:
+        if self.state == 1:
+            return True  # Terminate the episode if the state is 1
+        else:
+            return False  # Continue the episode for other states
+    
+    def get_player_action(self):
+        # Implement the logic to obtain the player's action
+        
+        # Example logic:
+        player_action = 0  # Default player's action
+        # Add your custom code to obtain the player's action
+        
+        return player_action
 
-# Define the tennis game environment
-env = gym.make("tennis-v0")
-num_actions = env.action_space.n
+# Define the custom environment
+env = TennisEnvironment()
 
 # Define the DQN model
 model = Sequential([
-    Dense(16, activation='relu', input_shape=(env.observation_space.shape[0],)),
-    Dense(16, activation='relu'),
-    Dense(num_actions, activation='linear')
+    Dense(24, activation='relu', input_shape=(1,)),
+    Dense(24, activation='relu'),
+    Dense(env.num_actions, activation='linear')
 ])
-model.compile(loss="mse", optimizer=Adam(learning_rate=0.0001))
-
-# Define the opponent model
-opponent_model = Sequential([
-    Dense(16, activation='relu', input_shape=(env.observation_space.shape[0],)),
-    Dense(16, activation='relu'),
-    Dense(num_actions, activation='linear')
-])
-opponent_model.compile(loss="mse", optimizer=Adam(learning_rate=0.0001))
-
-# Define the replay memory
-replay_memory_size = 10000
-replay_memory = []
+model.compile(loss="mse", optimizer=Adam(learning_rate=0.001))
 
 # Define hyperparameters
 num_episodes = 1000
@@ -46,10 +99,6 @@ epsilon_min = 0.01
 batch_size = 32
 gamma = 0.99
 
-# Define variables for lightweight resource usage
-target_network_update_freq = 10
-target_network_counter = 0
-
 # Define the training loop
 for episode in range(num_episodes):
     state = env.reset()
@@ -57,8 +106,11 @@ for episode in range(num_episodes):
     total_reward = 0
 
     while not done:
+        # Player's action
+        player_action = env.get_player_action()  # Get the player's action from the environment
+        
         if np.random.rand() <= epsilon:
-            action = np.random.randint(num_actions)
+            action = np.random.randint(env.num_actions)
         else:
             q_values = model.predict_on_batch(np.expand_dims(state, axis=0))
             action = np.argmax(q_values[0])
@@ -66,34 +118,9 @@ for episode in range(num_episodes):
         next_state, reward, done, _ = env.step(action)
         total_reward += reward
 
-        replay_memory.append((state, action, reward, next_state, done))
-        if len(replay_memory) > replay_memory_size:
-            replay_memory.pop(0)
-
-        if len(replay_memory) > batch_size:
-            batch_indices = np.random.choice(len(replay_memory), size=batch_size, replace=False)
-            batch = [replay_memory[i] for i in batch_indices]
-
-            states = np.array([transition[0] for transition in batch])
-            actions = np.array([transition[1] for transition in batch])
-            rewards = np.array([transition[2] for transition in batch])
-            next_states = np.array([transition[3] for transition in batch])
-            dones = np.array([transition[4] for transition in batch])
-
-            q_values_next = opponent_model.predict_on_batch(next_states)
-            targets = rewards + gamma * np.max(q_values_next, axis=1) * (1 - dones)
-
-            q_values = model.predict_on_batch(states)
-            q_values[np.arange(len(actions)), actions] = targets
-
-            model.train_on_batch(states, q_values)
+        # Perform training or other tasks based on the received state, reward, and done flag
 
         state = next_state
-
-        # Update the target network with the model's weights
-        target_network_counter += 1
-        if target_network_counter % target_network_update_freq == 0:
-            opponent_model.set_weights(model.get_weights())
 
     epsilon *= epsilon_decay
     epsilon = max(epsilon, epsilon_min)
