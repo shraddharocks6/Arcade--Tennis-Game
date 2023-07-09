@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <title>
+    Tennis Game
+  </title>
+  <style>
+    body {
+      padding-top: 5vh;
+      background-image: url("colorful-background-videogame-flat-design_23-2147567954.jpg");
+      /* background-size: cover;
+      background-position: center;
+      background-attachment: fixed; */
+    }
+
+    #bottomInfo {
+      background-color: black;
+      height: 80px;
+      text-align: center;
+      color: white;
+      font-family: "Consolas";
+      display: block;
+    }
+
+    #bottomInfo-mail {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .stripe {
+      height: 10px;
+      background-color: #fff;
+    }
+
+    #canvas-parent {
+      widows: 100%;
+      display: flex;
+      justify-content: center;
+    }
+  </style>
+  <body>
+    <div id="canvas-parent">
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+    <br /><br /><br />
+    <div id="gameContainer">
+      <canvas id="gameCanvas"></canvas>
+      <script src="Game.js"></script>
+    </div>
+    <div id="bottom-parent">
+      <div class="stripe"></div>
+      <div id="bottomInfo">
+        <br />
+        BUILT BY Shraddha Pandey<br />
+        <div id="bottomInfo-mail">
+          <img
+            class="mx-2 my-1"
+            src="./images/email-3-16.png"
+            alt=""
+          />shraddha6pandey@gmail.com
+        </div>
+      </div>
+      <div class="stripe"></div>
+    </div>
+  </body>
+</html>
