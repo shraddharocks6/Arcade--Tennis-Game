@@ -1,63 +1,160 @@
+<!DOCTYPE html>
 <html>
-  <title>
-    Tennis Game
-  </title>
+<head>
+  <title>Tennis Game with AI Model Integration</title>
   <style>
-    body {
-      padding-top: 5vh;
-      background-image: url("colorful-background-videogame-flat-design_23-2147567954.jpg");
-      /* background-size: cover;
-      background-position: center;
-      background-attachment: fixed; */
+    /* CSS styles for the game canvas */
+    #game-canvas {
+      border: 1px solid #000;
     }
 
-    #bottomInfo {
-      background-color: black;
-      height: 80px;
-      text-align: center;
-      color: white;
-      font-family: "Consolas";
-      display: block;
-    }
-
-    #bottomInfo-mail {
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-    }
-
-    .stripe {
-      height: 10px;
-      background-color: #fff;
-    }
-
-    #canvas-parent {
-      widows: 100%;
-      display: flex;
-      justify-content: center;
+    /* CSS styles for the AI model integration section */
+    #ai-model-section {
+      padding: 20px;
+      background-color: #f2f2f2;
     }
   </style>
-  <body>
-    <div id="canvas-parent">
-      <canvas id="gameCanvas" width="800" height="600"></canvas>
-    </div>
-    <br /><br /><br />
+</head>
+<body>
+  <canvas id="game-canvas" width="800" height="400"></canvas>
 
-    <div id="bottom-parent">
-      <div class="stripe"></div>
-      <div id="bottomInfo">
-        <br />
-        BUILT BY Shraddha Pandey<br />
-        <div id="bottomInfo-mail">
-          <img
-            class="mx-2 my-1"
-            src="./images/email-3-16.png"
-            alt=""
-          />shraddha6pandey@gmail.com
-        </div>
-      </div>
-      <div class="stripe"></div>
-    </div>
-    <script src="game.js"></script>
-  </body>
+  <div id="ai-model-section">
+    <!-- AI Model Integration Section -->
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.8.0/dist/tf.min.js"></script>
+  <script>
+    // Game canvas and context
+    const canvas = document.getElementById("game-canvas");
+    const context = canvas.getContext("2d");
+
+    // Game variables
+    let paddleWidth = 10;
+    let paddleHeight = 60;
+    let paddleSpeed = 6;
+    let ballSize = 8;
+    let ballSpeedX = 3;
+    let ballSpeedY = 3;
+
+    // Paddle positions
+    let playerY = canvas.height / 2 - paddleHeight / 2;
+    let aiY = canvas.height / 2 - paddleHeight / 2;
+
+    // Ball position
+    let ballX = canvas.width / 2;
+    let ballY = canvas.height / 2;
+
+    // Load the AI model
+    async function loadModel() {
+      const model = await tf.loadLayersModel("path/to/model.json");
+      return model;
+    }
+
+    // Get AI move using the loaded model
+    async function getAiMove(model, gameState) {
+      const tensor = tf.tensor2d([gameState]);
+      const predictions = await model.predict(tensor).array();
+      const moveIndex = predictions[0].indexOf(Math.max(...predictions[0]));
+      return moveIndex === 0 ? "up" : "down";
+    }
+
+    // Game loop
+    async function gameLoop() {
+      // Load the AI model
+      const model = await loadModel();
+
+      // Clear the canvas
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Update player paddle position based on user input
+      if (keyState["ArrowUp"] && playerY > 0) {
+        playerY -= paddleSpeed;
+      }
+      if (keyState["ArrowDown"] && playerY < canvas.height - paddleHeight) {
+        playerY += paddleSpeed;
+      }
+
+      // Get AI move using the model and update AI paddle position
+      const aiMove = await getAiMove(model, [aiY, ballX, ballY]);
+      if (aiMove === "up" && aiY > 0) {
+        aiY -= paddleSpeed;
+      }
+      if (aiMove === "down" && aiY < canvas.height - paddleHeight) {
+        aiY += paddleSpeed;
+      }
+
+      // Update ball position
+      ballX += ballSpeedX;
+      ballY += ballSpeedY;
+
+      // Ball collision with paddles
+      if (
+        ballY + ballSize > playerY &&
+        ballY < playerY + paddleHeight &&
+        ballX - ballSize < paddleWidth
+      ) {
+        ballSpeedX = -ballSpeedX;
+      }
+      if (
+        ballY + ballSize > aiY &&
+        ballY < aiY + paddleHeight &&
+        ballX + ballSize > canvas.width - paddleWidth
+      ) {
+        ballSpeedX = -ballSpeedX;
+      }
+
+      // Ball collision with top and bottom walls
+      if (ballY - ballSize < 0 || ballY + ballSize > canvas.height) {
+        ballSpeedY = -ballSpeedY;
+      }
+
+      // Draw paddles
+      context.fillStyle = "#000";
+      context.fillRect(0, playerY, paddleWidth, paddleHeight);
+      context.fillRect(canvas.width - paddleWidth, aiY, paddleWidth, paddleHeight);
+
+      // Draw ball
+      context.beginPath();
+      context.arc(ballX, ballY, ballSize, 0, Math.PI * 2);
+      context.fillStyle = "#000";
+      context.fill();
+      context.closePath();
+
+      // Request next frame
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Handle user input
+    const keyState = {};
+    window.addEventListener("keydown", (event) => {
+      keyState[event.key] = true;
+    });
+    window.addEventListener("keyup", (event) => {
+      keyState[event.key] = false;
+    });
+
+    // Start the game loop
+    gameLoop();
+  </script>
+  <script>
+    async function convertH5ModelToJSON() {
+      const model = await tf.loadLayersModel('path/to/model.h5');
+      const jsonModel = model.toJSON();
+      const jsonString = JSON.stringify(jsonModel);
+
+      const element = document.createElement('a');
+      element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(jsonString));
+      element.setAttribute('download', 'model.json');
+      element.style.display = 'none';
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+
+      console.log('Model converted to JSON.');
+    }
+
+    // Call the conversion function
+    convertH5ModelToJSON();
+  </script>
+</body>
 </html>
